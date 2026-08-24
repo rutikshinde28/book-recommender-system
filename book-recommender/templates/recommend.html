@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find similar books — The Shelf</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="brand-mark"></span>The&nbsp;Shelf</div>
+    <nav class="nav-links">
+      <a href="/">Trending</a>
+      <a href="/recommend" class="active">Find similar books</a>
+    </nav>
+  </div>
+</header>
+
+<section class="search-panel">
+  <span class="eyebrow">Item-based collaborative filtering</span>
+  <h1>Readers who liked <em>this</em>&hellip;</h1>
+  <p>Pick a title you know. We compare rating patterns across every reader
+     in the catalogue and surface the five books whose audience overlaps
+     most closely with this one &mdash; the same logic behind "customers
+     who bought this also bought."</p>
+
+  <form class="search-form" action="/recommend_books" method="post">
+    <input type="text" name="user_input" list="title-options"
+           placeholder="Start typing a book title&hellip;"
+           value="{{ query or '' }}" autocomplete="off" required>
+    <datalist id="title-options">
+      {% for t in titles %}
+      <option value="{{ t }}"></option>
+      {% endfor %}
+    </datalist>
+    <button type="submit">Find similar books</button>
+  </form>
+</section>
+
+{% if data is none %}
+  <div class="empty-state">Choose a title above to see its five closest matches.</div>
+
+{% elif data|length == 0 %}
+  <div class="no-match">
+    &ldquo;{{ query }}&rdquo; isn't in the catalogue used for collaborative filtering &mdash;
+    try a title from the dropdown suggestions.
+  </div>
+
+{% else %}
+  <section class="results-section">
+    <p class="results-heading">Because you picked <strong>{{ query }}</strong></p>
+    {% for book in data %}
+    <div class="result-row">
+      <div class="result-cover" style="--spine-color: {{ book.title|spine_color }};">
+        <img src="{{ book.image }}" alt="{{ book.title }}"
+             loading="lazy"
+             data-isbn="{{ book.isbn }}"
+             data-fallback="{{ book.title|cover_svg(book.author) }}">
+      </div>
+      <div class="result-text">
+        <p class="rtitle">{{ book.title }}</p>
+        <p class="rauthor">{{ book.author }}</p>
+      </div>
+      <div class="match-meter">
+        <div class="match-pct">{{ book.score }}% match</div>
+        <div class="match-bar"><span style="width: {{ book.score }}%;"></span></div>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+<footer>The Shelf &mdash; a demo book recommender built with popularity ranking &amp; item-based collaborative filtering</footer>
+
+<script src="{{ url_for('static', filename='covers.js') }}"></script>
+</body>
+</html>
